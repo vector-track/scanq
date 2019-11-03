@@ -1,0 +1,29 @@
+version: '3.3'
+
+services:
+  redis:
+    image: redis:5.0.6
+    ports:
+      - '6379:6379'
+    networks:
+      - redis-connect-network
+  web: &web
+    build: .
+    command: bundle exec ruby server.rb
+    ports:
+      - '4567:4567'
+    networks:
+      - redis-connect-network
+    depends_on:
+      - redis
+    environment:
+      - RHOST=redis
+  worker:
+    <<: *web
+    command: bundle exec rake resque:work
+    environment:
+      QUEUE: "*"
+      VVERBOSE: "true"
+    ports: []
+networks:
+  redis-connect-network:
